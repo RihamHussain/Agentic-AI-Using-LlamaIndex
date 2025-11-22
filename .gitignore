@@ -1,0 +1,14 @@
+# Secrets - CRITICAL
+.env
+
+# Python compiled files
+__pycache__/
+*.pyc
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# IDE settings (Optional)
+.vscode/
