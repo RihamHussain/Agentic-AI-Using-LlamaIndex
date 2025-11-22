@@ -1,57 +1,59 @@
 import os
+import sys
 import asyncio
 from dotenv import load_dotenv
-from tavily import AsyncTavilyClient
+from tavily import TavilyClient
 from llama_index.llms.google_genai import GoogleGenAI
+from llama_index.core.agent.workflow import AgentWorkflow
 
 load_dotenv()
 
-tavily_api_key = os.environ["TAVILY_API_KEY"]
-google_api_key = os.environ["GOOGLE_API_KEY"]
+# 1. Setup Keys
+tavily_api_key = os.environ.get("TAVILY_API_KEY")
+google_api_key = os.environ.get("GOOGLE_API_KEY")
 
-# Gemini model
+if not tavily_api_key or not google_api_key:
+    raise ValueError("Please set TAVILY_API_KEY and GOOGLE_API_KEY in your .env file")
+
+# 2. Setup Gemini
 llm = GoogleGenAI(
     model="gemini-2.0-flash",
     api_key=google_api_key
 )
 
-# --- Tavily Web Search Function (async) ---
-async def search_web_async(query: str):
-    client = AsyncTavilyClient(api_key=tavily_api_key)
-    return await client.search(query=query)
+# 3. Define the Tool
+def search_web(query: str) -> str:
+    """
+    Searches the web for the given query using Tavily.
+    """
+    print(f"   > searching for: {query}")
+    client = TavilyClient(api_key=tavily_api_key)
+    return str(client.search(query=query))
 
-# --- Wrapper to run async code safely ---
-def search_web(query: str):
-    return asyncio.run(search_web_async(query))
+# 4. Main Execution Function
+async def main():
+    workflow = AgentWorkflow.from_tools_or_functions(
+        [search_web],
+        llm=llm,
+        system_prompt="You are a helpful assistant. always check the web for current info."
+    )
 
+    print("🤖 Agent is thinking...")
+    
+    response = await workflow.run(user_msg="What is the current weather in San Francisco?")
+    
+    print("\nFINAL ANSWER:")
+    print(str(response))
+    
+    # Small pause to let connections close gracefully (optional but helpful)
+    await asyncio.sleep(0.1)
 
-# --- Combined logic (ALL sync → required by LlamaIndex) ---
-def ask_with_web_support(question: str):
-    print("\n🔍 Searching the web...")
-
-    # Step 1: real web search
-    web_data = search_web(question)
-
-    # Step 2: process through Gemini (sync)
-    prompt = f"""
-Use the following real web search results to answer this question accurately.
-
-Question:
-{question}
-
-Search Results:
-{web_data}
-
-Provide an accurate final answer with citations.
-"""
-
-    response = llm.complete(prompt)
-    return response.text
-
-
-# --- Run the script ---
+# 5. Run the Script (With Windows Fix)
 if __name__ == "__main__":
-    question = "Latest news about Nvidia AI chips this week"
-    answer = ask_with_web_support(question)
-    print("\n🤖 Gemini Final Answer:\n")
-    print(answer)
+    # --- WINDOWS SPECIFIC FIX ---
+    # This prevents the "Fatal error on SSL transport" crash on Windows
+    if sys.platform.startswith("win"):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # ----------------------------
+
+    asyncio.run(main())
