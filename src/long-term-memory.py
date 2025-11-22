@@ -8,13 +8,6 @@ from llama_index.core.agent.workflow import AgentWorkflow
 from llama_index.core.workflow import Context
 from llama_index.core.workflow import JsonPickleSerializer, JsonSerializer
 import json
-from llama_index.core.agent.workflow import (
-    AgentInput,
-    AgentOutput,
-    ToolCall,
-    ToolCallResult,
-    AgentStream,
-)
 
 load_dotenv()
 
@@ -51,22 +44,19 @@ async def main():
     # configure a context to work with our workflow
     ctx = Context(workflow)
 
-    handler = workflow.run(
-        user_msg="What is the weather in Saskatoon?", ctx=ctx # give the configured context to the workflow
+    response = await workflow.run(
+        user_msg="My name is Riham Hussain, nice to meet you!", ctx=ctx # give the configured context to the workflow
     )
-    print("First Respose is:  ")
-    async for event in handler.stream_events():
-        if isinstance(event, AgentStream):
-            print(event.delta, end="", flush=True)
+    print("First Respose is:",str(response))
 
     # convert our Context to a dictionary object
     ctx_dict = ctx.to_dict(serializer=JsonSerializer())
     # save the dictionary to a file
-    with open("memory.json", "w") as f:
+    with open(".\\data\\memory.json", "w") as f:
         json.dump(ctx_dict, f)
 
     # later... load the dictionary back from the file
-    with open("memory.json", "r") as f:
+    with open(".\\data\\memory.json", "r") as f:
         new_ctx_dict = json.load(f)
     # create a new Context from the dictionary
     restored_ctx = Context.from_dict(
@@ -74,11 +64,8 @@ async def main():
     )
 
     # run the workflow again with the same context
-    handler = workflow.run(user_msg="Ok, What is the weather in the closest city to it?", ctx=restored_ctx)
-    print("Second Respose is:  ")
-    async for event in handler.stream_events():
-        if isinstance(event, AgentStream):
-            print(event.delta, end="", flush=True)
+    response = await workflow.run(user_msg="Do You still remember my name?", ctx=restored_ctx)
+    print("Second Response is:", str(response))
 
 # 5. Run the Script (With Windows Fix)
 if __name__ == "__main__":

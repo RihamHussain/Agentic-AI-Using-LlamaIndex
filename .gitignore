@@ -1,5 +1,7 @@
 # Secrets - CRITICAL
 .env
+src/.env
+src\.env
 
 # Python compiled files
 __pycache__/
@@ -14,3 +16,9 @@ env/
 .vscode/
 
 memory.json
+
+data\
+data/
+data/*
+data\*
+data/memory.json
