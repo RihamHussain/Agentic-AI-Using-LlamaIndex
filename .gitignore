@@ -12,3 +12,5 @@ env/
 
 # IDE settings (Optional)
 .vscode/
+
+/memory.json
