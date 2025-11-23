@@ -6,7 +6,7 @@ from tavily import TavilyClient
 from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.core.agent.workflow import AgentWorkflow
 from llama_index.core.workflow import Context
-from llama_index.core.workflow import JsonPickleSerializer, JsonSerializer
+from llama_index.core.workflow import JsonSerializer
 import json
 
 load_dotenv()
